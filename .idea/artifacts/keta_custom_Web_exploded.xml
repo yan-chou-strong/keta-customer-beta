@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" name="keta-custom:Web exploded">
+    <output-path>$PROJECT_DIR$/out/artifacts/keta_custom_Web_exploded</output-path>
+    <root id="root">
+      <element id="javaee-facet-resources" facet="keta-custom/web/Web" />
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="keta-custom" />
+        </element>
+      </element>
+    </root>
+  </artifact>
+</component>
