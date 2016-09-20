@@ -3,39 +3,30 @@
  */
 package com.sample.controller;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import javax.servlet.ServletRequest;
-
-import javax.validation.Valid;
-
-import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Controller;
-import org.springframework.beans.propertyeditors.CustomDateEditor;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import com.ketayao.ketacustom.util.dwz.AjaxObject;
-import com.ketayao.ketacustom.util.dwz.Page;
-import com.ketayao.ketacustom.util.persistence.DynamicSpecifications;
 import com.ketayao.ketacustom.log.Log;
 import com.ketayao.ketacustom.log.LogMessageObject;
 import com.ketayao.ketacustom.log.impl.LogUitls;
+import com.ketayao.ketacustom.util.dwz.AjaxObject;
+import com.ketayao.ketacustom.util.dwz.Page;
+import com.ketayao.ketacustom.util.persistence.DynamicSpecifications;
 import com.sample.entity.Task;
 import com.sample.service.TaskService;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.ServletRequest;
+import javax.validation.Valid;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/management/demo/task")
@@ -49,14 +40,14 @@ public class TaskController {
 	private static final String LIST = "management/demo/task/list";
 	private static final String VIEW = "management/demo/task/view";
 	
-	@InitBinder
+	@InitBinder//bean中定义了Date，double等类型，如果没有做任何处理的话，日期以及double都无法绑定。标签对表单数据绑定
 	public void dataBinder(WebDataBinder dataBinder) {
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 		dataBinder.registerCustomEditor(Date.class, 
 				new CustomDateEditor(df, true));
 	}
 	
-	@RequiresPermissions("Task:save")
+	@RequiresPermissions("Task:save")//要求用户有保存任务权限
 	@RequestMapping(value="/create", method=RequestMethod.GET)
 	public String preCreate(Map<String, Object> map) {
 		return CREATE;
@@ -65,15 +56,15 @@ public class TaskController {
 	@Log(message="添加了id={0}任务。")
 	@RequiresPermissions("Task:save")
 	@RequestMapping(value="/create", method=RequestMethod.POST)
-	public @ResponseBody String create(@Valid Task task) {
+	public @ResponseBody String create(@Valid Task task) {//@Valid 数据校验
 		taskService.saveOrUpdate(task);
 
 		LogUitls.putArgs(LogMessageObject.newWrite().setObjects(new Object[]{task.getId()}));
 		return AjaxObject.newOk("任务添加成功！").toString();
 	}
 	
-	@ModelAttribute("preloadTask")
-	public Task preload(@RequestParam(value = "id", required = false) Long id) {
+	@ModelAttribute("preloadTask")//@ModelAttribute注释的方法会在此controller每个方法执行前被执行，因此对于一个controller映射多个URL的用法来说，要谨慎使用。
+	public Task preload(@RequestParam(value = "id", required = false) Long id) {//一种是request.getParameter("name")，另外一种是用注解@RequestParam直接获取 可以通过required=false或者true来要求@RequestParam配置的前端参数是否一定要传
 		if (id != null) {
 			Task task = taskService.get(id);
 			return task;
@@ -83,7 +74,7 @@ public class TaskController {
 	
 	@RequiresPermissions("Task:edit:User关联的资源")
 	@RequestMapping(value="/update/{id}", method=RequestMethod.GET)
-	public String preUpdate(@PathVariable Long id, Map<String, Object> map) {
+	public String preUpdate(@PathVariable Long id, Map<String, Object> map) {//@PathVariable是用来获得请求url中的动态参数的
 		Task task = taskService.get(id);
 		map.put("task", task);
 		return UPDATE;

@@ -135,6 +135,7 @@ public class ShiroDbRealm extends AuthorizingRealm {
 	@Override
 	protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
 		Collection<?> collection = principals.fromRealm(getName());
+		//当事人集合
 		if (collection == null || collection.isEmpty()) {
 			return null;
 		}
@@ -169,22 +170,33 @@ public class ShiroDbRealm extends AuthorizingRealm {
 				log.info(shiroUser.getLoginName() + "拥有的权限:" + hasPermissions);
 			}
 		} else {
+			//查询用户角色
 			List<UserRole> userRoles = userRoleService.findByUserId(shiroUser.getId());
+			//查询用户所属部门所拥有角色
 			List<OrganizationRole> organizationRoles = organizationRoleService
 					.findByOrganizationId(shiroUser.getUser().getOrganization().getId());
-			
+			//封装所有角色
 			Collection<Role> roles = getUserRoles(userRoles, organizationRoles);
+			//管理员 角色名字集合
 			hasRoles = makeRoles(roles, shiroUser);
 			hasPermissions = makePermissions(roles, shiroUser);
 		}
 		
 		SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
+		//加入角色集合
 		info.addRoles(hasRoles);
+		//加入权限集合
 		info.addStringPermissions(hasPermissions);
 		
 		return info;
 	}
-	
+
+	/**
+	 * 封装角色拥有角色（本身拥有加部门拥有） set
+	 * @param userRoles
+	 * @param organizationRoles
+     * @return
+     */
 	private Collection<Role> getUserRoles(List<UserRole> userRoles, List<OrganizationRole> organizationRoles) {
 		Set<Role> roles = new HashSet<Role>();
 		for (UserRole userRole : userRoles) {
@@ -199,7 +211,7 @@ public class ShiroDbRealm extends AuthorizingRealm {
 	}
 	
 	/**
-	 * 组装角色权限
+	 * 组装权限角色
 	 * @param roles
 	 * @param shiroUser
 	 * @return
@@ -207,6 +219,7 @@ public class ShiroDbRealm extends AuthorizingRealm {
 	private Collection<String> makeRoles(Collection<Role> roles, ShiroUser shiroUser) {
 		Collection<String> hasRoles = new HashSet<String>();
 		for (Role role : roles) {
+			//role name 管理员
 			hasRoles.add(role.getName());
 		}
 
@@ -229,45 +242,60 @@ public class ShiroDbRealm extends AuthorizingRealm {
 		
 		Collection<String> stringPermissions = new ArrayList<String>();
 		for (Role role : roles) {
+			//级联查询获取用户权限
 			List<RolePermission> rolePermissions = role.getRolePermissions();
 			for (RolePermission rolePermission : rolePermissions) {
+				//权限集合的单个权限
 				Permission permission = rolePermission.getPermission();
-				
+				//getSn() 获取所属模块
 				String resource = permission.getModule().getSn();
+				//operate操作
 				String operate = permission.getSn();
-		
+
+				//使用：组装权限为字符串
 				StringBuilder builder = new StringBuilder();
 				builder.append(resource + ":" + operate);
-				
+				//把部分认证信息放入模块中
 				shiroUser.getHasModules().put(resource, permission.getModule());
-				
+
+				//使用：组装资源权限字符串
 				StringBuilder dcBuilder = new StringBuilder();
+				//RolePermissionDataControl自己封装的角色权限资源数据控制实体类
 				for (RolePermissionDataControl rpdc : rolePermission.getRolePermissionDataControls()) {
 					DataControl dataControl = rpdc.getDataControl();
 					dcBuilder.append(dataControl.getName() + ",");
 					
 					shiroUser.getHasDataControls().put(dataControl.getName(), dataControl);
 				}
-				
+				//使用：组装资源权限字符串
 				if (dcBuilder.length() > 0) {
 					builder.append(":" + dcBuilder.substring(0, dcBuilder.length() - 1));
 				}
-				
+				//全部权限放入这里
 				stringPermissions.add(builder.toString());
 			}
 		}
-
+		//日志操作
 		if (log.isInfoEnabled()) {
 			log.info(shiroUser.getLoginName() + "拥有的权限:" + stringPermissions);
 		}
+		//放回此权限集合
 		return stringPermissions;
 	}
-	
+
+	/**
+	 * 封装一个解密密码的返回类
+	 */
 	public static class HashPassword {
 		public String salt;
 		public String password;
 	}
-	
+
+	/**
+	 * encrypt 将密码译成salt+password
+	 * @param plainPassword
+	 * @return
+     */
 	public static HashPassword encryptPassword(String plainPassword) {
 		HashPassword result = new HashPassword();
 		byte[] salt = Digests.generateSalt(SALT_SIZE);
@@ -281,7 +309,7 @@ public class ShiroDbRealm extends AuthorizingRealm {
 	/**
 	 * 
 	 * 验证密码
-	 * @param plainPassword 明文密码
+	 * @param plainPassword 明文密码 （清晰密码）
 	 * @param password 密文密码
 	 * @param salt 盐值
 	 * @return
@@ -308,7 +336,7 @@ public class ShiroDbRealm extends AuthorizingRealm {
 	 */
 	public void clearCachedAuthorizationInfo(String loginName) {
 		ShiroUser shiroUser = new ShiroUser(loginName);
-		
+		//getName()当前realm
 		SimplePrincipalCollection principals = new SimplePrincipalCollection(shiroUser, getName());
 		clearCachedAuthorizationInfo(principals);
 	}

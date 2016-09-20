@@ -55,7 +55,7 @@ public class TaskServiceImpl implements TaskService {
 	 * @see com.sample.service.TaskService#findAll(com.ketayao.ketacustom.util.dwz.Page)  
 	 */
 	@Override
-	public List<Task> findAll(Page page) {
+	public List<Task> findAll(Page page) {//DWZ SPRING DATA 分页实现
 		org.springframework.data.domain.Page<Task> springDataPage = taskDAO.findAll(PageUtils.createPageable(page));
 		page.setTotalCount(springDataPage.getTotalElements());
 		return springDataPage.getContent();

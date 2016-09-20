@@ -3,27 +3,23 @@
  */
 package com.sample.entity;
 
-import java.util.Date;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-
 import com.ketayao.ketacustom.entity.Idable;
 import com.ketayao.ketacustom.entity.main.User;
+
+import javax.persistence.*;
+import java.util.Date;
 
 @Entity
 @Table(name="sample_task")
 public class Task implements Idable<Long>{
 	@Id
+	/**
+	 * JPA提供的四种标准用法为TABLE,SEQUENCE,IDENTITY,AUTO.
+	 TABLE：使用一个特定的数据库表格来保存主键。
+	 SEQUENCE：根据底层数据库的序列来生成主键，条件是数据库支持序列。
+	 IDENTITY：主键由数据库自动生成（主要是自动增长型）
+	 AUTO：主键由程序控制。
+	 */
 	@GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     
@@ -54,6 +50,11 @@ public class Task implements Idable<Long>{
     
 	/**
 	 * 创建时间
+	 *  (1) 如果在某类中有Date类型的属性，数据库中存储可能是'yyyy-MM-dd hh:MM:ss'要在查询时获得年月日，在该属性上标注@Temporal(TemporalType.DATE) 会得到形如'yyyy-MM-dd' 格式的日期。
+
+	 (2)如果在某类中有Date类型的属性，数据库中存储可能是'yyyy-MM-dd hh:MM:ss'要获得时分秒，在该属性上标注 @Temporal(TemporalType.TIME) 会得到形如'HH:MM:SS' 格式的日期。
+
+	 (3)如果在某类中有Date类型的属性，数据库中存储可能是'yyyy-MM-dd hh:MM:ss'要获得'是'yyyy-MM-dd hh:MM:ss'，在该属性上标注 @Temporal(TemporalType.TIMESTAMP) 会得到形如'HH:MM:SS' 格式的日期
 	 */
     @Column(length=19)
 	@Temporal(TemporalType.TIMESTAMP)
